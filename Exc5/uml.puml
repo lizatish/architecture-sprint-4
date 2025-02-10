@@ -1,0 +1,29 @@
+@startuml
+title Cache-Aside Pattern: Чтение списка заказов и обновление статуса
+
+actor Пользователь as User
+participant "MES CLients API" as OrderService
+participant "Кэш" as Cache
+participant "MES db" as Database
+
+== Чтение списка заказов ==
+User -> OrderService : Запрос списка заказов
+OrderService -> Cache : Проверка наличия данных в кэше
+alt Данные есть в кэше
+    Cache --> OrderService : Возврат данных из кэша
+else Данных нет в кэше
+    OrderService -> Database : Запрос списка заказов
+    Database --> OrderService : Возврат данных из БД
+    OrderService -> Cache : Сохранение данных в кэше
+end
+OrderService --> User : Возврат списка заказов
+
+== Обновление статуса заказа ==
+User -> OrderService : Запрос на изменение статуса заказа
+OrderService -> Database : Обновление статуса заказа в БД
+Database --> OrderService : Подтверждение обновления
+OrderService -> Cache : Инвалидация кэша (удаление данных)
+Cache --> OrderService : Подтверждение инвалидации
+OrderService --> User : Подтверждение изменения статуса
+
+@enduml
